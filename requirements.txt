@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+langchain
+langchain-community
+python-dotenv
+openai
+colorama
