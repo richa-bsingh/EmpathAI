@@ -14,13 +14,14 @@ from app.agents import (
 from app.logging_config import get_logger
 
 load_dotenv()
-logger = get_logger(_name_, level="DEBUG")
+logger = get_logger(__name__, level="DEBUG")
 
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173","http://localhost:3000"],
-    allow_methods=[""], allow_headers=[""]
+    allow_origins=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"]
 )
 
 class Message(BaseModel):
