@@ -40,7 +40,7 @@ const moods = {
     textSecondary: 'text-slate-400',
     aiAvatar: 'from-teal-400 to-blue-500',
     shadow: 'shadow-2xl shadow-slate-900/50',
-    aiEmoji: '🌊'
+    aiEmoji: 'AI'
   },
   energized: {
     name: 'Energized',
@@ -56,7 +56,7 @@ const moods = {
     textSecondary: 'text-gray-600',
     aiAvatar: 'from-yellow-400 to-pink-400',
     shadow: 'shadow-2xl shadow-yellow-200/50',
-    aiEmoji: '✨'
+    aiEmoji: 'AI'
   }
 }
 
