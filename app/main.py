@@ -1,8 +1,6 @@
-import json
-import re
+import json, re
 from datetime import datetime
 from typing import List, Literal
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -16,13 +14,13 @@ from app.agents import (
 from app.logging_config import get_logger
 
 load_dotenv()
-logger = get_logger(__name__, level="DEBUG")
+logger = get_logger(_name_, level="DEBUG")
 
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173","http://localhost:3000"],
-    allow_methods=["*"], allow_headers=["*"]
+    allow_methods=[""], allow_headers=[""]
 )
 
 class Message(BaseModel):
@@ -37,6 +35,7 @@ class SupportResponse(BaseModel):
     emotion: str
     behaviour: str
     intelligence: str
+    mood_description: str
     final_response: str
 
 def validate_safety(text: str) -> bool:
@@ -49,7 +48,6 @@ def flag_content(text: str) -> List[str]:
 
 @app.post("/support", response_model=SupportResponse)
 async def support(req: SupportRequest):
-    # 1) Reconstruct history
     history = "\n".join(
         f"{'User' if m.role=='user' else 'AI'}: {m.content}"
         for m in req.history
@@ -57,7 +55,7 @@ async def support(req: SupportRequest):
     user_input = req.message
     logger.info(f"📝 New message: {user_input}\nHistory:\n{history}")
 
-    # 2) Build context rules for intelligence agent
+    # Build time-of-day context
     hour = datetime.now().hour
     context_rules = (
         "Late night: only recommend quiet, indoor activities."
@@ -65,53 +63,74 @@ async def support(req: SupportRequest):
     )
 
     try:
-        # 3) Mood inference
+        # 1) Mood inference
         mood_json = mood_chain.run({"history": history, "user_input": user_input})
         mood_data = json.loads(mood_json)
-        e_conf = float(mood_data["e_conf"])
-        b_conf = float(mood_data["b_conf"])
-        i_conf = float(mood_data["i_conf"])
-        logger.debug(f"📊 Mood confidences: {mood_data}")
+        tone  = mood_data["tone"]
+        description= mood_data["description"]
+        e_conf, b_conf, i_conf = (
+            float(mood_data["e_conf"]),
+            float(mood_data["b_conf"]),
+            float(mood_data["i_conf"])
+        )
+        logger.debug(f"📊 Mood: {tone} (e:{e_conf}, b:{b_conf}, i:{i_conf})")
 
-        # 4) Core agents
+        # 2) Core agent outputs
         e_raw = emotion_chain.run({"history": history, "user_input": user_input})
         b_raw = behaviour_chain.run({"history": history, "user_input": user_input})
         i_raw = intelligence_chain.run({
             "history": history, "user_input": user_input, "context": context_rules
         })
 
-        # 5) Reflections
+        # 3) Reflections
         e_ref = e_reflector.run({"insight": e_raw})
         b_ref = b_reflector.run({"insight": b_raw})
         i_ref = i_reflector.run({"insight": i_raw})
 
-        # 6) Final merge weighted by mood confidences
-        final = merge_chain.run({
+        # 4) Final merge with tone & weights
+        merge_inputs = {
             "history":     history,
             "user_input":  user_input,
+            "tone":        tone,
+            "description": description,
             "e_insight":   e_ref,
             "b_insight":   b_ref,
             "i_insight":   i_ref,
             "e_conf":      e_conf,
             "b_conf":      b_conf,
             "i_conf":      i_conf
-        })
-        logger.info(f"✨ Final merged: {final}")
+        }
+        
+        logger.info(f"🔀 Final merge inputs:")
+        logger.info(f"   - History: {history[:200]}{'...' if len(history) > 200 else ''}")
+        logger.info(f"   - User input: {user_input}")
+        logger.info(f"   - Tone: {tone}")
+        logger.info(f"   - Mood description: {description}")
+        logger.info(f"   - E insight: {e_ref}")
+        logger.info(f"   - B insight: {b_ref}")
+        logger.info(f"   - I insight: {i_ref}")
+        logger.info(f"   - Weights: e={e_conf:.2f}, b={b_conf:.2f}, i={i_conf:.2f}")
+        
+        final = merge_chain.run(merge_inputs)
+        
+        logger.info(f"✨ Final merged response: {final}")
+        logger.info(f"📏 Final response length: {len(final)} characters")
 
-        # 7) Safety & flags
+        # 5) Safety & flags
         if not validate_safety(final):
-            raise HTTPException(500, detail="Safety policy violation")
+            raise HTTPException(500, "Safety policy violation")
         flags = flag_content(final)
         if flags:
             logger.warning(f"⚠️ Content flags: {flags}")
 
         return {
-            "emotion":       e_ref,
-            "behaviour":     b_ref,
-            "intelligence":  i_ref,
+            "emotion":      e_ref,
+            "behaviour":    b_ref,
+            "intelligence": i_ref,
+            "mood_description": description,
             "final_response": final
         }
 
     except Exception as e:
         logger.error("❌ /support error", exc_info=e)
-        raise HTTPException(500, detail=str(e))
+        raise HTTPException(500, str(e))
