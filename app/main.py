@@ -19,9 +19,10 @@ logger = get_logger(__name__, level="DEBUG")
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*", "https://empath-ai-khaki.vercel.app/"],
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"]
+    allow_headers=["*"],
+    allow_credentials=True
 )
 
 class Message(BaseModel):

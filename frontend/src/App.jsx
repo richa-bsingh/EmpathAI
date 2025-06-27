@@ -1,6 +1,9 @@
+// src/App.jsx
 import { useState, useRef, useEffect } from 'react'
 
-const API_URL = 'http://localhost:8000/support'
+// const API_URL = 'http://localhost:8000/support'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+const API_URL = `${API_BASE_URL}/support`
 
 import calm1 from '../public/images/3 copy 2.png'
 import calm2 from '../public/images/3 copy 3.png'
@@ -91,32 +94,30 @@ export default function App() {
     setCurrentMood(moodKeys[nextIndex])
   }
 
-  const formatTime = (date) => {
-    return new Intl.DateTimeFormat('en-US', {
+  const formatTime = (date) =>
+    new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true
     }).format(date)
-  }
 
   async function handleSubmit(e) {
     e.preventDefault()
     if (!input.trim()) return
 
-    const userMessage = { 
-      sender: 'user', 
-      text: input, 
-      timestamp: new Date() 
+    const userMessage = {
+      sender: 'user',
+      text: input,
+      timestamp: new Date()
     }
-    
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setShowQuickResponses(false)
-    
-    const loadingMessage = { 
-      sender: 'ai', 
-      loading: true, 
-      timestamp: new Date() 
+
+    const loadingMessage = {
+      sender: 'ai',
+      loading: true,
+      timestamp: new Date()
     }
     setMessages(prev => [...prev, loadingMessage])
     setIsTyping(true)
@@ -124,7 +125,10 @@ export default function App() {
     try {
       const history = messages
         .filter(m => !m.loading && m.sender !== 'error')
-        .map(m => ({ role: m.sender, content: m.sender === 'user' ? m.text : m.final }))
+        .map(m => ({
+          role: m.sender,
+          content: m.sender === 'user' ? m.text : m.final
+        }))
 
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -152,11 +156,14 @@ export default function App() {
     } catch (err) {
       setMessages(prev => {
         const noLoad = prev.filter(m => !m.loading)
-        return [...noLoad, { 
-          sender: 'error', 
-          text: `I'm having trouble connecting right now. Please try again in a moment.`, 
-          timestamp: new Date() 
-        }]
+        return [
+          ...noLoad,
+          {
+            sender: 'error',
+            text: `I'm having trouble connecting right now. Please try again in a moment.`,
+            timestamp: new Date()
+          }
+        ]
       })
     } finally {
       setIsTyping(false)
@@ -186,9 +193,18 @@ export default function App() {
   const TypingIndicator = () => (
     <div className="flex items-center gap-2 p-3">
       <div className="flex space-x-1">
-        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        <div
+          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+          style={{ animationDelay: '0ms' }}
+        ></div>
+        <div
+          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+          style={{ animationDelay: '150ms' }}
+        ></div>
+        <div
+          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+          style={{ animationDelay: '300ms' }}
+        ></div>
       </div>
       <span className="text-sm text-gray-500">EmpathAI typing...</span>
     </div>
@@ -200,12 +216,11 @@ export default function App() {
     { type: 'image', src: calm2, mood: 'calm', className: 'top-40 right-10 opacity-15' },
     { type: 'image', src: calm3, mood: 'calm', className: 'bottom-32 left-14 opacity-10' },
     { type: 'image', src: calm4, mood: 'calm', className: 'bottom-48 right-12 opacity-20' },
-    
     // Energized mode elements
     { type: 'image', src: energy1, mood: 'energized', className: 'top-24 left-10 opacity-15' },
     { type: 'image', src: energy2, mood: 'energized', className: 'top-36 right-6 opacity-20' },
     { type: 'image', src: energy3, mood: 'energized', className: 'bottom-40 left-12 opacity-15' },
-    { type: 'image', src: energy4, mood: 'energized', className: 'bottom-24 right-10 opacity-10' },
+    { type: 'image', src: energy4, mood: 'energized', className: 'bottom-24 right-10 opacity-10' }
   ]
 
   return (
@@ -221,7 +236,6 @@ export default function App() {
             transform: translateY(0);
           }
         }
-        
         @keyframes slideIn {
           from {
             opacity: 0;
@@ -232,7 +246,6 @@ export default function App() {
             transform: translateX(0);
           }
         }
-        
         @keyframes slideInRight {
           from {
             opacity: 0;
@@ -243,69 +256,85 @@ export default function App() {
             transform: translateX(0);
           }
         }
-        
         .animate-fadeIn {
           animation: fadeIn 0.5s ease-out;
         }
-        
         .animate-slideIn {
           animation: slideIn 0.5s ease-out;
         }
-        
         .animate-slideInRight {
           animation: slideInRight 0.5s ease-out;
         }
-        
         .scrollbar-thin::-webkit-scrollbar {
           width: 6px;
         }
-        
         .scrollbar-thin::-webkit-scrollbar-track {
           background: transparent;
         }
-        
         .scrollbar-thin::-webkit-scrollbar-thumb {
           background: rgba(156, 163, 175, 0.5);
           border-radius: 3px;
         }
-        
         .scrollbar-thin::-webkit-scrollbar-thumb:hover {
           background: rgba(156, 163, 175, 0.7);
         }
       `}</style>
-      
-      <div className={`flex items-center justify-center min-h-screen p-4 ${theme.bg} ${theme.text} transition-all duration-700 relative overflow-hidden`}>
+
+      <div
+        className={`
+          flex items-center justify-center min-h-screen p-4
+          ${theme.bg} ${theme.text} transition-all duration-700
+          relative overflow-hidden
+        `}
+      >
         {/* Floating placeholder elements */}
         {placeholderElements
           .filter(el => el.mood === currentMood)
           .map((el, i) => (
             <div
               key={`${currentMood}-${i}`}
-              className={`absolute pointer-events-none transition-all duration-1000 ${el.className} animate-pulse`}
-              style={{ 
+              className={`
+                absolute pointer-events-none transition-all duration-1000
+                ${el.className} animate-pulse
+              `}
+              style={{
                 animationDelay: `${i * 0.5}s`,
                 animationDuration: `${3 + i}s`
               }}
             >
-              <img 
-                src={el.src} 
-                alt="Mood decoration" 
-                className="rounded-lg shadow-lg w-[150px] h-[150px] object-cover opacity-60"          />
+              <img
+                src={el.src}
+                alt="Mood decoration"
+                className="rounded-lg shadow-lg w-[150px] h-[150px] object-cover opacity-60"
+              />
             </div>
           ))}
-        
-        <div className={`flex flex-col w-full max-w-2xl h-[95vh] ${theme.cardBg} rounded-3xl ${theme.shadow} overflow-hidden transition-all duration-700 relative z-10 border ${theme.border}`}>
+
+        <div
+          className={`
+            flex flex-col w-full max-w-2xl h-[95vh]
+            ${theme.cardBg} rounded-3xl ${theme.shadow}
+            overflow-hidden transition-all duration-700 relative z-10
+            border ${theme.border}
+          `}
+        >
           {/* Header */}
-          <header className={`p-6 border-b ${theme.border} text-center relative backdrop-blur-sm`}>
+          <header
+            className={`p-6 border-b ${theme.border} text-center relative backdrop-blur-sm`}
+          >
             <div className="flex items-center justify-between">
               <div className="w-12"></div> {/* Spacer */}
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <h1
+                  className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+                >
                   EmpathAI
                 </h1>
-                <p className={`text-sm ${theme.textSecondary} mt-1`}>Your compassionate AI companion for mental well-being</p>
+                <p className={`text-sm ${theme.textSecondary} mt-1`}>
+                  Your compassionate AI companion for mental well-being
+                </p>
               </div>
-              
+
               {/* Mood Toggle Button */}
               <button
                 onClick={toggleMood}
@@ -317,8 +346,16 @@ export default function App() {
                   shadow-lg hover:shadow-xl
                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
                 `}
-                title={`Switch to ${moods[Object.keys(moods).find(key => key !== currentMood)]?.name} mood`}
-                aria-label={`Switch to ${moods[Object.keys(moods).find(key => key !== currentMood)]?.name} mood`}
+                title={`Switch to ${
+                  moods[
+                    Object.keys(moods).find(key => key !== currentMood)
+                  ]?.name
+                } mood`}
+                aria-label={`Switch to ${
+                  moods[
+                    Object.keys(moods).find(key => key !== currentMood)
+                  ]?.name
+                } mood`}
               >
                 <span className="text-lg">{theme.icon}</span>
                 <span>{theme.name}</span>
@@ -327,18 +364,35 @@ export default function App() {
           </header>
 
           {/* Chat */}
-          <main ref={containerRef} className="flex-1 p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
+          <main
+            ref={containerRef}
+            className="flex-1 p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent"
+          >
             <div className="space-y-6">
               {messages.map((m, i) => (
-                <div key={i} className={m.sender === 'user' ? 'animate-slideInRight' : 'animate-slideIn'}>
+                <div
+                  key={i}
+                  className={
+                    m.sender === 'user'
+                      ? 'animate-slideInRight'
+                      : 'animate-slideIn'
+                  }
+                >
                   {/* User message */}
                   {m.sender === 'user' && (
                     <div className="flex justify-end">
                       <div className="flex flex-col items-end max-w-lg">
-                        <div className={`${theme.userBubble} text-white p-4 rounded-2xl rounded-br-md shadow-lg transition-all duration-300 hover:shadow-xl`}>
+                        <div
+                          className={`
+                            ${theme.userBubble} text-white p-4 rounded-2xl rounded-br-md shadow-lg
+                            transition-all duration-300 hover:shadow-xl
+                          `}
+                        >
                           <p className="leading-relaxed">{m.text}</p>
                         </div>
-                        <span className={`text-xs ${theme.textSecondary} mt-2`}>
+                        <span
+                          className={`text-xs ${theme.textSecondary} mt-2`}
+                        >
                           {formatTime(m.timestamp)}
                         </span>
                       </div>
@@ -351,9 +405,11 @@ export default function App() {
                       <div
                         className={`
                           flex items-center justify-center font-semibold h-10 w-10 rounded-full shadow-lg transition-all duration-300
-                          ${m.sender === 'error'
-                            ? 'bg-red-500 text-white'
-                            : `bg-gradient-to-br ${theme.aiAvatar} text-white`}
+                          ${
+                            m.sender === 'error'
+                              ? 'bg-red-500 text-white'
+                              : `bg-gradient-to-br ${theme.aiAvatar} text-white`
+                          }
                         `}
                       >
                         {m.sender === 'error' ? '⚠️' : theme.aiEmoji}
@@ -363,34 +419,56 @@ export default function App() {
                         <div
                           className={`
                             p-4 rounded-2xl rounded-tl-md transition-all duration-300
-                            ${m.sender === 'error'
-                              ? 'bg-red-100 text-red-800 border border-red-200'
-                              : `${theme.cardBg} ${theme.text} border ${theme.border}`}
+                            ${
+                              m.sender === 'error'
+                                ? 'bg-red-100 text-red-800 border border-red-200'
+                                : `${theme.cardBg} ${theme.text} border ${theme.border}`
+                            }
                           `}
                         >
                           {m.loading ? (
                             <TypingIndicator />
                           ) : (
-                            <p className="leading-relaxed">{m.final || m.text}</p>
+                            <p className="leading-relaxed">
+                              {m.final || m.text}
+                            </p>
                           )}
                         </div>
 
                         {/* Timestamp */}
-                        <span className={`text-xs ${theme.textSecondary} ml-2`}>
+                        <span
+                          className={`text-xs ${theme.textSecondary} ml-2`}
+                        >
                           {formatTime(m.timestamp)}
                         </span>
 
                         {/* Reasoning Analysis */}
                         {!m.loading && m.sender === 'ai' && (
-                          <details className={`mt-2 ${theme.cardBg} p-4 rounded-xl border ${theme.border} transition-all duration-300 hover:shadow-md`}>
-                            <summary className={`cursor-pointer font-medium ${theme.text} hover:text-blue-400 transition-colors duration-200`}>
+                          <details
+                            className={`mt-2 ${theme.cardBg} p-4 rounded-xl border ${theme.border} transition-all duration-300 hover:shadow-md`}
+                          >
+                            <summary
+                              className={`cursor-pointer font-medium ${theme.text} hover:text-blue-400 transition-colors duration-200`}
+                            >
                               View AI Analysis
                             </summary>
                             <div className="mt-3 flex flex-wrap gap-2 px-1">
-                              <Tag c="purple" label="Mood" t={m.mood_description} />
+                              <Tag
+                                c="purple"
+                                label="Mood"
+                                t={m.mood_description}
+                              />
                               <Tag c="sky" label="Emotion" t={m.emotion} />
-                              <Tag c="emerald" label="Behaviour" t={m.behaviour} />
-                              <Tag c="fuchsia" label="Intelligence" t={m.intelligence} />
+                              <Tag
+                                c="emerald"
+                                label="Behaviour"
+                                t={m.behaviour}
+                              />
+                              <Tag
+                                c="fuchsia"
+                                label="Intelligence"
+                                t={m.intelligence}
+                              />
                             </div>
                           </details>
                         )}
@@ -429,7 +507,9 @@ export default function App() {
           )} */}
 
           {/* Input */}
-          <footer className={`p-6 border-t ${theme.border} transition-all duration-500 backdrop-blur-sm`}>
+          <footer
+            className={`p-6 border-t ${theme.border} transition-all duration-500 backdrop-blur-sm`}
+          >
             <form onSubmit={handleSubmit} className="flex items-center gap-3">
               <input
                 value={input}
