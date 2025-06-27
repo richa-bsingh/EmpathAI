@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 
 // const API_URL = 'http://localhost:8000/support'
-const API_URL = "https://empathai-easw.onrender.com"
+const API_URL = "https://empathai-easw.onrender.com/support"
 
 import calm1 from '../public/images/3 copy 2.png'
 import calm2 from '../public/images/3 copy 3.png'
